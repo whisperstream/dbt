@@ -19,10 +19,10 @@
 
   {% set to_drop = [] %}
   {% if existing_relation is none %}
-      {% do run_query(create_table_as(False, target_relation, sql), "main") %}
+      {% set build_sql = create_table_as(False, target_relation, sql) %}
   {% elif existing_relation.is_view or full_refresh_mode %}
       {% do adapter.rename_relation(target_relation, backup_relation) %}
-      {% do run_query(create_table_as(False, target_relation, sql), "main") %}
+      {% set build_sql = create_table_as(False, target_relation, sql) %}
       {% do to_drop.append(backup_relation) %}
   {% else %}
       {% set tmp_relation = make_temp_relation(target_relation) %}
@@ -30,8 +30,12 @@
       {% do adapter.expand_target_column_types(
              from_relation=tmp_relation,
              to_relation=target_relation) %}
-      {% do incremental_upsert(tmp_relation, target_relation, unique_key=unique_key) %}
+      {% set build_sql = incremental_upsert(tmp_relation, target_relation, unique_key=unique_key) %}
   {% endif %}
+
+  {% call statement("main") %}
+      {{ build_sql }}
+  {% endcall %}
 
   {{ run_hooks(post_hooks, inside_transaction=True) }}
 
@@ -39,7 +43,7 @@
   {% do adapter.commit() %}
 
   {% for rel in to_drop %}
-      {% do drop_relation_if_exists(rel) %}
+      {% do drop_relation(rel) %}
   {% endfor %}
 
   {{ run_hooks(post_hooks, inside_transaction=False) }}
