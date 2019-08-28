@@ -243,10 +243,11 @@ class ParserRef(object):
         self.column_info = {}
         self.docrefs = []
 
-    def add(self, column_name, description):
+    def add(self, column_name, description, data_type):
         self.column_info[column_name] = {
             'name': column_name,
             'description': description,
+            'data_type': data_type,
         }
 
 
@@ -258,8 +259,9 @@ class SchemaBaseTestParser(MacrosKnownParser):
         # this should yield ParsedNodes where resource_type == NodeType.Test
         column_name = column['name']
         description = column.get('description', '')
+        data_type = column.get('data_type', '')
 
-        refs.add(column_name, description)
+        refs.add(column_name, description, data_type)
         context = {
             'doc': dbt.context.parser.docs(target, refs.docrefs, column_name)
         }
@@ -372,12 +374,14 @@ class SchemaModelParser(SchemaBaseTestParser):
 
         context = {'doc': dbt.context.parser.docs(model_dict, refs.docrefs)}
         description = model_dict.get('description', '')
+        data_type = model_dict.get('data_type', '')
         get_rendered(description, context)
 
         patch = ParsedNodePatch(
             name=model_name,
             original_file_path=path,
             description=description,
+            data_type=data_type,
             columns=refs.column_info,
             docrefs=refs.docrefs
         )
@@ -438,6 +442,7 @@ class SchemaSourceParser(SchemaBaseTestParser):
 
         context = {'doc': dbt.context.parser.docs(source, refs.docrefs)}
         description = table.get('description', '')
+        external = table.get('external', '')
         source_description = source.get('description', '')
         get_rendered(description, context)
         get_rendered(source_description, context)
@@ -466,6 +471,7 @@ class SchemaSourceParser(SchemaBaseTestParser):
             unique_id=unique_id,
             name=table.name,
             description=description,
+            external=external,
             source_name=source.name,
             source_description=source_description,
             loader=source.get('loader', ''),

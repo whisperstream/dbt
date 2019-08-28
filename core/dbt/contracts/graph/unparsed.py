@@ -6,7 +6,7 @@ from dbt.utils import deep_merge
 
 UNPARSED_BASE_CONTRACT = {
     'type': 'object',
-    'additionalProperties': False,
+    'additionalProperties': True,
     'properties': {
         'package_name': {
             'type': 'string',
@@ -94,7 +94,7 @@ class UnparsedNode(APIObject):
 
 COLUMN_TEST_CONTRACT = {
     'type': 'object',
-    'additionalProperties': False,
+    'additionalProperties': True,
     'properties': {
         'name': {
             'type': 'string',
@@ -103,6 +103,10 @@ COLUMN_TEST_CONTRACT = {
         'description': {
             'type': 'string',
             'description': 'The description of this test',
+        },
+        'data_type': {
+            'type': 'string',
+            'description': 'User-provided data type of this column',
         },
         'tests': {
             'type': 'array',
@@ -166,7 +170,7 @@ UNPARSED_NODE_UPDATE_CONTRACT = deep_merge(
     UNPARSED_COLUMN_DESCRIPTION_CONTRACT,
     {
         'type': 'object',
-        'additionalProperties': False,
+        'additionalProperties': True,
         'description': (
             'A collection of the unparsed node updates, as provided in the '
             '"models" section of schema.yml'
@@ -185,7 +189,7 @@ class UnparsedNodeUpdate(APIObject):
 
 TIME_CONTRACT = {
     'type': 'object',
-    'additionalProperties': False,
+    'additionalProperties': True,
     'properties': {
         'count': {
             'type': 'integer',
@@ -200,7 +204,7 @@ TIME_CONTRACT = {
 
 _FRESHNESS_CONTRACT = {
     'type': 'object',
-    'additionalProperties': False,
+    'additionalProperties': True,
     'properties': {
         'warn_after': {
             'anyOf': [
@@ -221,7 +225,7 @@ _FRESHNESS_CONTRACT = {
 
 _QUOTING_CONTRACT = {
     'type': 'object',
-    'additionalProperties': False,
+    'additionalProperties': True,
     'properties': {
         'database': {'type': 'boolean'},
         'schema': {'type': 'boolean'},
@@ -284,7 +288,7 @@ UNPARSED_SOURCE_DEFINITION_CONTRACT = deep_merge(
     QUOTING_CONTRACT,
     {
         'type': 'object',
-        'additionalProperties': False,
+        'additionalProperties': True,
         'description': (
             'A collection of the unparsed sources, as provided in the '
             '"sources" section of schema.yml'
@@ -340,7 +344,7 @@ class UnparsedSourceDefinition(APIObject):
 
 UNPARSED_DOCUMENTATION_FILE_CONTRACT = {
     'type': 'object',
-    'additionalProperties': False,
+    'additionalProperties': True,
     'properties': {
         'package_name': {
             'type': 'string',

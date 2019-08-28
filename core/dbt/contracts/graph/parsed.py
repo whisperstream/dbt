@@ -110,6 +110,10 @@ COLUMN_INFO_CONTRACT = {
             'type': 'string',
             'description': 'A description of the column',
         },
+        'data_type': {
+            'type': 'string',
+            'description': 'User-provided data type of this column',
+        },
     },
     'required': ['name', 'description'],
 }
@@ -527,7 +531,7 @@ class ParsedSnapshotNode(ParsedNode):
 # may be empty.
 PARSED_NODE_PATCH_CONTRACT = {
     'type': 'object',
-    'additionalProperties': False,
+    'additionalProperties': True,
     'description': 'A collection of values that can be set on a node',
     'properties': {
         'name': {
@@ -713,6 +717,55 @@ FRESHNESS_CONTRACT = {
     },
 }
 
+EXTERNAL_SOURCE_CONTRACT = {
+    'additionalProperties': True,
+    'properties': {
+        'location': {
+            'type': ['null', 'string'],
+            'description': 'The external stage or file path',
+        },
+        'file_format': {
+            'type': ['null', 'string'],
+            'description': 'The file format (Hive/Snowflake)',
+        },
+        'row_format': {
+            'type': ['null', 'string'],
+            'description': 'The row format (Hive)',
+        },
+        'tbl_properties': {
+            'type': ['null', 'string'],
+            'description': 'Optional table properties (Hive)',
+        },
+        'partitions': {
+            'anyOf': [
+                {'type': 'null'},
+                {
+                    'type': 'object',
+                    'additionalProperties': True,
+                    'properties': {
+                        'name': {
+                            'type': 'string',
+                            'description': (
+                                'Name of a partition column'
+                            ),
+                        },
+                        'data_type': {
+                            'type': 'string',
+                            'description': (
+                                'Data type of a partition column'
+                            ),
+                        },
+                        'expression': {
+                            'type': ['null', 'string'],
+                            'description': 'The external stage or file path',
+                        },
+                    },
+                },
+            ],
+        },
+    },
+}
+
 
 QUOTING_CONTRACT = {
     'properties': {
@@ -733,6 +786,7 @@ QUOTING_CONTRACT = {
 PARSED_SOURCE_DEFINITION_CONTRACT = deep_merge(
     UNPARSED_BASE_CONTRACT,
     FRESHNESS_CONTRACT,
+    EXTERNAL_SOURCE_CONTRACT,
     QUOTING_CONTRACT,
     HAS_DESCRIPTION_CONTRACT,
     HAS_UNIQUE_ID_CONTRACT,
