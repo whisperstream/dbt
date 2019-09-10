@@ -56,9 +56,6 @@ class RunTask(CompileTask):
     def raise_on_first_error(self):
         return False
 
-    def populate_adapter_cache(self, adapter):
-        adapter.set_relations_cache(self.manifest)
-
     def get_hook_sql(self, adapter, hook, idx, num_hooks, extra_context):
         compiled = compile_node(adapter, self.config, hook, self.manifest,
                                 extra_context)

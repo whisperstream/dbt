@@ -52,6 +52,9 @@ class ManifestTask(ConfiguredTask):
         self.load_manifest()
         self.compile_manifest()
 
+    def populate_adapter_cache(self, adapter):
+        adapter.set_relations_cache(self.manifest)
+
 
 class GraphRunnableTask(ManifestTask):
     def __init__(self, args, config):

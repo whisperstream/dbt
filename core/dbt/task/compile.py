@@ -9,6 +9,10 @@ class CompileTask(GraphRunnableTask):
     def raise_on_first_error(self):
         return True
 
+    def before_run(self, adapter, selected_uids):
+        with adapter.connection_named('master'):
+            self.populate_adapter_cache(adapter)
+
     def build_query(self):
         return {
             "include": self.args.models,
