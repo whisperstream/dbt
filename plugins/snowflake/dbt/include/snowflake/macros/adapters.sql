@@ -36,9 +36,10 @@
 
 {% macro snowflake__create_view_as(relation, sql) -%}
   {%- set secure = config.get('secure', default=false) -%}
+  {%- set copy_grants = config.get('copy_grants', default=false) -%}
   create or replace {% if secure -%}
     secure
-  {%- endif %} view {{ relation }} as (
+  {%- endif %} view {{ relation }} {% if copy_grants -%} copy grants {%- endif %} as (
     {{ sql }}
   );
 {% endmacro %}
