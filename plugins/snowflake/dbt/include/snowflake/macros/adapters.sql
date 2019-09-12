@@ -2,6 +2,7 @@
   {%- set transient = config.get('transient', default=true) -%}
   {%- set cluster_by_keys = config.get('cluster_by', default=none) -%}
   {%- set enable_automatic_clustering = config.get('automatic_clustering', default=false) -%}
+  {%- set copy_grants = config.get('copy_grants', default=false) -%}
   {%- if cluster_by_keys is not none and cluster_by_keys is string -%}
     {%- set cluster_by_keys = [cluster_by_keys] -%}
   {%- endif -%}
@@ -15,8 +16,8 @@
         temporary
       {%- elif transient -%}
         transient
-      {%- endif %} table {{ relation }}
-      as (
+      {%- endif %} table {{ relation }} {% if copy_grants and not temporary -%} copy grants {%- endif %} as 
+      (
         {%- if cluster_by_string is not none -%}
           select * from(
             {{ sql }}
