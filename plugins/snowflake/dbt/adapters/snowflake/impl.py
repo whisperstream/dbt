@@ -10,7 +10,7 @@ class SnowflakeAdapter(SQLAdapter):
 
     AdapterSpecificConfigs = frozenset(
         {"transient", "cluster_by", "automatic_clustering", "secure"
-            , "copy_grants"}
+        , "copy_grants"}
     )
 
     @classmethod
