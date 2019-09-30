@@ -21,7 +21,7 @@ from dbt.exceptions import (
     validator_error_message, JSONValidationException,
     raise_invalid_schema_yml_version, ValidationException, CompilationException
 )
-from dbt.node_types import NodeType, SourceType
+from dbt.node_types import NodeType
 from dbt.parser.base import SimpleParser
 from dbt.parser.search import FileBlock, FilesystemSearcher
 from dbt.parser.schema_test_builders import (
@@ -62,9 +62,10 @@ class ParserRef:
         self.column_info: Dict[str, ColumnInfo] = {}
         self.docrefs: List[Docref] = []
 
-    def add(self, column_name, description):
+    def add(self, column_name, description, data_type):
         self.column_info[column_name] = ColumnInfo(name=column_name,
-                                                   description=description)
+                                                   description=description,
+                                                   data_type=data_type)
 
 
 def collect_docrefs(
@@ -216,9 +217,10 @@ class SchemaParser(SimpleParser[SchemaTestBlock, ParsedTestNode]):
     ) -> None:
         column_name = column.name
         description = column.description
+        data_type = column.data_type
         collect_docrefs(block.target, refs, column_name, description)
 
-        refs.add(column_name, description)
+        refs.add(column_name, description, data_type)
 
         if not column.tests:
             return
@@ -348,6 +350,7 @@ class SchemaParser(SimpleParser[SchemaTestBlock, ParsedTestNode]):
             unique_id=unique_id,
             name=table.name,
             description=description,
+            external=table.external,
             source_name=source.name,
             source_description=source_description,
             loader=source.loader,
@@ -355,7 +358,7 @@ class SchemaParser(SimpleParser[SchemaTestBlock, ParsedTestNode]):
             loaded_at_field=loaded_at_field,
             freshness=freshness,
             quoting=quoting,
-            resource_type=SourceType(NodeType.Source),
+            resource_type=NodeType.Source,
             fqn=[self.project.project_name, source.name, table.name],
         )
 

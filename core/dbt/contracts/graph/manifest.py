@@ -25,16 +25,31 @@ NodeEdgeMap = Dict[str, List[str]]
 class FilePath(JsonSchemaMixin):
     searched_path: str
     relative_path: str
-    absolute_path: str
+    project_root: str
 
     @property
-    def search_key(self):
-        # TODO: should this be project root + original_file_path?
+    def search_key(self) -> str:
+        # TODO: should this be project name + path relative to project root?
         return self.absolute_path
 
     @property
-    def original_file_path(self):
-        return os.path.join(self.searched_path, self.relative_path)
+    def full_path(self) -> str:
+        # useful for symlink preservation
+        return os.path.normcase(os.path.join(
+            self.project_root, self.searched_path, self.relative_path
+        ))
+
+    @property
+    def absolute_path(self) -> str:
+        return os.path.normcase(os.path.abspath(self.full_path))
+
+    @property
+    def original_file_path(self) -> str:
+        # this is mostly used for reporting errors. It doesn't show the project
+        # name, should it?
+        return os.path.join(
+            self.searched_path, self.relative_path
+        )
 
 
 @dataclass
@@ -211,7 +226,7 @@ class Manifest:
         self.generated_at = generated_at
         self.disabled = disabled
         self.files = files
-        self._flat_graph = None
+        self.flat_graph = None
         super(Manifest, self).__init__()
 
     @classmethod
@@ -263,19 +278,17 @@ class Manifest:
             send_anonymous_usage_stats=send_anonymous_usage_stats,
         )
 
-    def to_flat_graph(self):
-        """This function gets called in context.common by each node, so we want
-        to cache it. Make sure you don't call this until you're done with
-        building your manifest!
+    def build_flat_graph(self):
+        """This attribute is used in context.common by each node, so we want to
+        only build it once and avoid any concurrency issues around it.
+        Make sure you don't call this until you're done with building your
+        manifest!
         """
-        if self._flat_graph is None:
-            self._flat_graph = {
-                'nodes': {
-                    k: v.to_dict(omit_none=False)
-                    for k, v in self.nodes.items()
-                },
-            }
-        return self._flat_graph
+        self.flat_graph = {
+            'nodes': {
+                k: v.to_dict(omit_none=False) for k, v in self.nodes.items()
+            },
+        }
 
     def find_disabled_by_name(self, name, package=None):
         return dbt.utils.find_in_list_by_name(self.disabled, name, package,
@@ -366,38 +379,6 @@ class Manifest:
             resource_fqns[resource_type_plural].add(tuple(node.fqn))
 
         return resource_fqns
-
-    def _filter_subgraph(self, subgraph, predicate):
-        """
-        Given a subgraph of the manifest, and a predicate, filter
-        the subgraph using that predicate. Generates a list of nodes.
-        """
-        to_return = []
-
-        for unique_id, item in subgraph.items():
-            if predicate(item):
-                to_return.append(item)
-
-        return to_return
-
-    def _model_matches_schema_and_table(self, schema, table, model):
-        if model.resource_type == NodeType.Source:
-            return (model.schema.lower() == schema.lower() and
-                    model.identifier.lower() == table.lower())
-        return (model.schema.lower() == schema.lower() and
-                model.alias.lower() == table.lower())
-
-    def get_unique_ids_for_schema_and_table(self, schema, table):
-        """
-        Given a schema and table, find matching models, and return
-        their unique_ids. A schema and table may have more than one
-        match if the relation matches both a source and a seed, for instance.
-        """
-        def predicate(model):
-            return self._model_matches_schema_and_table(schema, table, model)
-
-        matching = list(self._filter_subgraph(self.nodes, predicate))
-        return [match.unique_id for match in matching]
 
     def add_nodes(self, new_nodes):
         """Add the given dict of new nodes to the manifest."""
