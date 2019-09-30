@@ -21,6 +21,7 @@ from dbt.logger import GLOBAL_LOGGER as logger  # noqa
 # approaches which will extend well to potentially many modules
 import pytz
 import datetime
+import re
 
 
 class RelationProxy:
@@ -327,6 +328,14 @@ def get_pytz_module_context():
     }
 
 
+def get_re_module_context():
+    context_exports = re.__all__
+
+    return {
+        name: getattr(re, name) for name in context_exports
+    }
+
+
 def get_datetime_module_context():
     context_exports = [
         'date',
@@ -345,6 +354,7 @@ def get_context_modules():
     return {
         'pytz': get_pytz_module_context(),
         'datetime': get_datetime_module_context(),
+        're': get_re_module_context(),
     }
 
 
