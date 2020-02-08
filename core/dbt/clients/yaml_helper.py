@@ -62,7 +62,7 @@ def contextualized_yaml_error(raw_contents, error):
 
 def load_yaml_text(contents):
     try:
-        if has_attr(contents, 'name') and has_attr(contents, 'read'):
+        if hasattr(contents, 'name') and hasattr(contents, 'read'):
             return yaml.load(contents, Loader)
         else:
             return yaml.safe_load(contents)
