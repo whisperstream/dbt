@@ -1,5 +1,7 @@
 import dbt.exceptions
 
+import os
+
 import yaml
 import yaml.scanner
 
@@ -13,6 +15,20 @@ Raw Error:
 ------------------------------
 {raw_error}
 """.strip()
+
+
+class Loader(yaml.SafeLoader):
+    def __init__(self, stream):
+        self._root = os.path.split(stream.name)[0]
+        super(Loader, self).__init__(stream)
+
+    def include(self, node):
+        filename = os.path.join(self._root, self.construct_scalar(node))
+        with open(filename, 'r') as f:
+            return yaml.load(f, Loader)
+
+
+Loader.add_constructor('!include', Loader.include)
 
 
 def line_no(i, line, width=3):
@@ -46,7 +62,10 @@ def contextualized_yaml_error(raw_contents, error):
 
 def load_yaml_text(contents):
     try:
-        return yaml.safe_load(contents)
+        if has_attr(contents, 'name') and has_attr(contents, 'read'):
+            return yaml.load(contents, Loader)
+        else:
+            return yaml.safe_load(contents)
     except (yaml.scanner.ScannerError, yaml.YAMLError) as e:
         if hasattr(e, 'problem_mark'):
             error = contextualized_yaml_error(contents, e)

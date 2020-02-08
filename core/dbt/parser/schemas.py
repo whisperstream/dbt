@@ -1,3 +1,4 @@
+from io import StringIO
 import itertools
 import os
 
@@ -164,7 +165,13 @@ class SchemaParser(SimpleParser[SchemaTestBlock, ParsedTestNode]):
         """
         path: str = source_file.path.relative_path
         try:
-            return load_yaml_text(source_file.contents)
+            # convert schema.yml contents into a stream
+            stream = StringIO(source_file.contents)
+            # add the path of the schema.yml file so that we
+            # have the path it came from and can use it as a root
+            # to find relative include paths
+            stream.name = source_file.path.absolute_path
+            return load_yaml_text(stream)
         except ValidationException as e:
             reason = validator_error_message(e)
             raise CompilationException(
